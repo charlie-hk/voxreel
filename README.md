@@ -1,3 +1,5 @@
+![voxreel](docs/cover.png)
+
 # voxreel
 
 A consent-first pipeline for AI voice and AI-generated video. You describe scenes in one JSON file;
