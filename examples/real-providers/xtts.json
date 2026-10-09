@@ -1,0 +1,21 @@
+{
+  "title": "My voice with XTTS",
+  "output": "out/xtts.mp4",
+  "resolution": "1280x720",
+  "fps": 24,
+  "purpose": "narration",
+  "voice": "me",
+  "tts": {
+    "provider": "command",
+    "config": {
+      "cmd": ["C:\\path\\to\\xtts-env\\Scripts\\python.exe", "-m", "voxreel.tools.xtts",
+              "--text-file", "{text_file}", "--speaker-wav", "{sample}", "--language", "en",
+              "--out", "{out}", "--agree-license"],
+      "timeout": 1800
+    }
+  },
+  "video": { "provider": "mock", "config": {} },
+  "scenes": [
+    { "id": "one", "text": "This sentence is spoken in my own cloned voice, with my consent on record.", "visual": "A quiet studio" }
+  ]
+}

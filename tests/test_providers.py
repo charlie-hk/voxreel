@@ -173,3 +173,34 @@ class HttpProviderTests(ProjectCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class XttsToolTests(ProjectCase):
+    """The model itself cannot run in CI; these cover everything around it."""
+
+    def run_tool(self, voice, extra=()):
+        out = self.dir / "o.wav"
+        text = self.dir / "t.txt"
+        text.write_text("hello there", encoding="utf-8")
+        tts = get_tts("command", {"cmd": ["{python}", "-m", "voxreel.tools.xtts", "--text-file", "{text_file}",
+                                          "--speaker-wav", "{sample}", "--out", "{out}", *extra]})
+        tts.synthesize("hello there", voice, out)
+
+    def test_stock_voice_gets_a_clear_message(self):
+        with self.assertRaises(ProviderError) as ctx:
+            self.run_tool(VOICE)
+        self.assertIn("needs a cloned voice", str(ctx.exception))
+
+    def test_missing_library_gets_a_clear_message(self):
+        sample = self.make_sample()
+        voice = VoiceRef("me", "cloned", None, sample, "x")
+        with self.assertRaises(ProviderError) as ctx:
+            self.run_tool(voice)
+        self.assertIn("pip install coqui-tts", str(ctx.exception))
+
+    def test_unsupported_language(self):
+        sample = self.make_sample()
+        voice = VoiceRef("me", "cloned", None, sample, "x")
+        with self.assertRaises(ProviderError) as ctx:
+            self.run_tool(voice, ["--language", "fa"])
+        self.assertIn("does not support language", str(ctx.exception))

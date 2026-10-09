@@ -87,6 +87,26 @@ environment variables (`${ENV:NAME}`), never from the project file, cache keys o
 is refused except for localhost. Text you synthesize cannot inject environment variables or placeholders.
 See `examples/real-providers/hosted-api.json`; the endpoints there are placeholders.
 
+### Your own voice with XTTS-v2 (local, open model)
+
+`voxreel.tools.xtts` is a ready-made wrapper for [Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS).
+It speaks in a registered, consented voice using the sample you gave to `voxreel voice clone`.
+
+```bash
+python -m venv xtts-env                      # Python 3.10-3.12 is the safe choice for PyTorch
+xtts-env\Scripts\activate                    # Windows  (Linux/macOS: source xtts-env/bin/activate)
+pip install coqui-tts
+```
+
+Then use `examples/real-providers/xtts.json`: put the path of that environment's `python` as the first item of
+`cmd`, register your voice with `voxreel voice clone ... --confirm`, and run. The first run downloads the model
+(about 2 GB); each scene loads it again, so expect it to be slow on CPU.
+
+* Languages: en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh-cn, ja, hu, ko, hi (no Persian).
+* Samples in m4a/mp3/wav all work (ffmpeg converts them). A clean 6-30 second recording gives the best result.
+* **Licence:** the XTTS-v2 weights are under the Coqui Public Model License, which is non-commercial.
+  Read it before using the output for paid work, or write another provider around a model you may use commercially.
+
 ### Your own provider
 
 ```python
@@ -107,7 +127,7 @@ class MyTTS(TTSProvider):
 ## Development
 
 ```bash
-python -m unittest discover -s tests -t . -v      # 42 tests; ffmpeg is needed for the render tests
+python -m unittest discover -s tests -t . -v      # 45 tests; ffmpeg is needed for the render tests
 ```
 
 ## Responsible use

@@ -7,17 +7,23 @@ Config:
 The command is an argument list and is never passed through a shell. Placeholders:
   TTS:   {text} {text_file} {voice} {sample} {out}
   video: {prompt} {duration} {width} {height} {fps} {out}
+  both:  {python} (the interpreter running voxreel)
+
+voxreel's own helper tools (python -m voxreel.tools.xtts) work from any folder because the package
+location is added to PYTHONPATH for the command.
 """
 from __future__ import annotations
 
+import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 from ..errors import ProviderError
 from .base import TTSProvider, VideoProvider, VideoRequest, VoiceRef, register_tts, register_video
 
-_KNOWN = re.compile(r"\{(text|text_file|voice|sample|out|prompt|duration|width|height|fps)\}")
+_KNOWN = re.compile(r"\{(text|text_file|voice|sample|out|prompt|duration|width|height|fps|python)\}")
 
 
 def _render(arg: str, ctx: dict) -> str:
@@ -28,12 +34,16 @@ def _run(config: dict, ctx: dict, out_path: Path, label: str) -> None:
     cmd = config.get("cmd")
     if not isinstance(cmd, list) or not cmd or not all(isinstance(a, str) for a in cmd):
         raise ProviderError(f"{label}: config.cmd must be a non-empty list of strings")
+    ctx = {**ctx, "python": sys.executable}
     argv = [_render(a, ctx) for a in cmd]
+    env = dict(os.environ)
+    package_root = str(Path(__file__).resolve().parents[2])
+    env["PYTHONPATH"] = package_root + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
     timeout = int(config.get("timeout", 900))
     if out_path.exists():
         out_path.unlink()
     try:
-        proc = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, cwd=out_path.parent)
+        proc = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, cwd=out_path.parent, env=env)
     except FileNotFoundError as exc:
         raise ProviderError(f"{label}: cannot run {argv[0]!r}: {exc}") from exc
     except subprocess.TimeoutExpired as exc:
