@@ -95,13 +95,21 @@ It speaks in a registered, consented voice using the sample you gave to `voxreel
 ```bash
 python -m venv xtts-env                      # Python 3.10-3.12 is the safe choice for PyTorch
 xtts-env\Scripts\activate                    # Windows  (Linux/macOS: source xtts-env/bin/activate)
-pip install coqui-tts
+pip install coqui-tts "transformers>=4.57,<5" "torch==2.8.0" "torchaudio==2.8.0"
 ```
+
+(Tested on Windows with Python 3.12. Newer PyTorch needs `torchcodec` and FFmpeg DLLs for audio loading; pinning
+torch/torchaudio 2.8.0 avoids that. transformers 5 removed a function the library imports.)
 
 Then use `examples/real-providers/xtts.json`: put the path of that environment's `python` as the first item of
 `cmd`, register your voice with `voxreel voice clone ... --confirm`, and run. The first run downloads the model
 (about 2 GB); each scene loads it again, so expect it to be slow on CPU.
 
+* Persian and other languages: XTTS-v2 does not speak them, but community fine-tunes do. `--hf-repo` / `--model-dir`
+  load one (see `examples/real-providers/xtts-persian.json`, which uses `MohammadJRanjbar/ParsVoice-XTTS`; the repo is
+  gated, so accept its terms on huggingface.co and run `hf auth login` first). Quality and licence are the model
+  author's; read the model card. This path is provided as-is and has not been tested end to end by the
+  voxreel author.
 * Languages: en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh-cn, ja, hu, ko, hi (no Persian).
 * Samples in m4a/mp3/wav all work (ffmpeg converts them). A clean 6-30 second recording gives the best result.
 * **Licence:** the XTTS-v2 weights are under the Coqui Public Model License, which is non-commercial.
@@ -127,7 +135,7 @@ class MyTTS(TTSProvider):
 ## Development
 
 ```bash
-python -m unittest discover -s tests -t . -v      # 45 tests; ffmpeg is needed for the render tests
+python -m unittest discover -s tests -t . -v      # 47 tests; ffmpeg is needed for the render tests
 ```
 
 ## Responsible use

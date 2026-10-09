@@ -1,0 +1,21 @@
+{
+  "title": "My voice, in Persian",
+  "output": "out/persian.mp4",
+  "resolution": "1280x720",
+  "fps": 24,
+  "purpose": "narration",
+  "voice": "me",
+  "tts": {
+    "provider": "command",
+    "config": {
+      "cmd": ["{python}", "-m", "voxreel.tools.xtts", "--text-file", "{text_file}",
+              "--speaker-wav", "{sample}", "--language", "fa",
+              "--hf-repo", "MohammadJRanjbar/ParsVoice-XTTS", "--out", "{out}", "--agree-license"],
+      "timeout": 3600
+    }
+  },
+  "video": { "provider": "mock", "config": {} },
+  "scenes": [
+    { "id": "one", "text": "سلام، این جمله با صدای شبیه‌سازی‌شده‌ی خودم و با رضایت خودم ساخته شده است.", "visual": "A quiet studio" }
+  ]
+}

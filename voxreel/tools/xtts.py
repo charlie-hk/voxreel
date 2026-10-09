@@ -9,6 +9,11 @@ Setup (a separate Python 3.10-3.12 environment is recommended; PyTorch does not 
 Licence: the XTTS-v2 model weights use the Coqui Public Model License, which is non-commercial.
 Read it before using the output for client work: https://coqui.ai/cpml
 Pass --agree-license once you have read it (the model download otherwise asks interactively).
+
+Other languages (for example Persian): XTTS-v2 itself does not speak them, but community fine-tunes do.
+Point the tool at one with --hf-repo (downloaded through huggingface_hub; gated repositories need
+`hf auth login` first) or --model-dir (a folder with config.json and the checkpoint files), and pass
+--language with that model's language code. The tool cannot judge such a model; check its licence and card.
 """
 from __future__ import annotations
 
@@ -42,6 +47,24 @@ def to_reference_wav(sample: Path, workdir: Path) -> Path:
     return out
 
 
+def resolve_model_dir(hf_repo: str, model_dir: str) -> Path:
+    if model_dir:
+        folder = Path(model_dir)
+    else:
+        try:
+            from huggingface_hub import snapshot_download
+        except ImportError:
+            raise RuntimeError("huggingface_hub is not installed (pip install huggingface_hub)") from None
+        try:
+            folder = Path(snapshot_download(repo_id=hf_repo))
+        except Exception as exc:  # noqa: BLE001 - the hub raises many unrelated types
+            raise RuntimeError(f"could not download {hf_repo!r}: {exc}. If the repository is gated, accept its "
+                               "terms on the website and run `hf auth login` first.") from exc
+    if not (folder / "config.json").is_file():
+        raise RuntimeError(f"{folder} has no config.json; it is not an XTTS-style model folder")
+    return folder
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="python -m voxreel.tools.xtts", description=__doc__.split("\n")[0])
     p.add_argument("--text-file", required=True)
@@ -49,6 +72,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--language", default="en", help=f"one of: {LANGUAGES}")
     p.add_argument("--out", required=True)
     p.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
+    p.add_argument("--hf-repo", default="", help="Hugging Face repo id of an XTTS fine-tune (e.g. for Persian)")
+    p.add_argument("--model-dir", default="", help="local folder of an XTTS-style model (config.json + checkpoint)")
     p.add_argument("--agree-license", action="store_true", help="I have read the Coqui Public Model License")
     args = p.parse_args(argv)
 
@@ -61,8 +86,12 @@ def main(argv: list[str] | None = None) -> int:
     text = text_path.read_text(encoding="utf-8").strip()
     if not text:
         return fail("the text is empty")
-    if args.language not in LANGUAGES.split():
-        return fail(f"XTTS-v2 does not support language {args.language!r}; supported: {LANGUAGES}")
+    custom = bool(args.hf_repo or args.model_dir)
+    if args.hf_repo and args.model_dir:
+        return fail("use either --hf-repo or --model-dir, not both")
+    if not custom and args.language not in LANGUAGES.split():
+        return fail(f"XTTS-v2 does not support language {args.language!r}; supported: {LANGUAGES}. "
+                    "For other languages use a community fine-tune with --hf-repo or --model-dir.")
 
     if args.agree_license:
         os.environ["COQUI_TOS_AGREED"] = "1"
@@ -81,7 +110,14 @@ def main(argv: list[str] | None = None) -> int:
             reference = to_reference_wav(Path(args.speaker_wav), Path(tmp))
         except RuntimeError as exc:
             return fail(str(exc))
-        tts = TTS(MODEL).to(device)
+        if custom:
+            try:
+                model_dir = resolve_model_dir(args.hf_repo, args.model_dir)
+            except RuntimeError as exc:
+                return fail(str(exc))
+            tts = TTS(model_path=str(model_dir), config_path=str(model_dir / "config.json")).to(device)
+        else:
+            tts = TTS(MODEL).to(device)
         tts.tts_to_file(text=text, speaker_wav=str(reference), language=args.language, file_path=args.out)
     return 0
 

@@ -204,3 +204,20 @@ class XttsToolTests(ProjectCase):
         with self.assertRaises(ProviderError) as ctx:
             self.run_tool(voice, ["--language", "fa"])
         self.assertIn("does not support language", str(ctx.exception))
+
+    def test_custom_model_allows_other_languages_and_checks_the_folder(self):
+        sample = self.make_sample()
+        voice = VoiceRef("me", "cloned", None, sample, "x")
+        with self.assertRaises(ProviderError) as ctx:
+            self.run_tool(voice, ["--language", "fa", "--model-dir", str(self.dir / "nope")])
+        message = str(ctx.exception)
+        self.assertNotIn("does not support language", message)
+        # either the TTS library is missing in CI, or the folder is rejected: both are clear messages
+        self.assertTrue("pip install coqui-tts" in message or "no config.json" in message)
+
+    def test_cannot_combine_model_sources(self):
+        sample = self.make_sample()
+        voice = VoiceRef("me", "cloned", None, sample, "x")
+        with self.assertRaises(ProviderError) as ctx:
+            self.run_tool(voice, ["--hf-repo", "a/b", "--model-dir", str(self.dir)])
+        self.assertIn("not both", str(ctx.exception))
