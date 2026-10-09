@@ -1,0 +1,37 @@
+{
+  "title": "Hosted API example",
+  "output": "out/hosted.mp4",
+  "purpose": "narration",
+  "voice": "narrator",
+  "tts": {
+    "provider": "http",
+    "config": {
+      "url": "https://api.example.com/v1/speech",
+      "headers": { "Authorization": "Bearer ${ENV:TTS_API_KEY}" },
+      "body": { "text": "{text}", "voice": "{voice}" },
+      "response": "binary"
+    }
+  },
+  "video": {
+    "provider": "http",
+    "config": {
+      "url": "https://api.example.com/v1/video",
+      "headers": { "Authorization": "Bearer ${ENV:VIDEO_API_KEY}" },
+      "body": { "prompt": "{prompt}", "seconds": "{duration}", "width": "{width}", "height": "{height}" },
+      "poll": {
+        "job_path": "id",
+        "url": "https://api.example.com/v1/video/{job_id}",
+        "status_path": "status",
+        "done": ["succeeded"],
+        "failed": ["failed"],
+        "result_path": "output.0",
+        "result": "json_url",
+        "interval": 5,
+        "timeout": 1800
+      }
+    }
+  },
+  "scenes": [
+    { "id": "one", "text": "api.example.com is a placeholder. Copy the field names from your vendor's documentation.", "visual": "A calm lake at dawn" }
+  ]
+}

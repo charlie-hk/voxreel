@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.voxreel/
+out/
+samples/
+consent.json
+voices.json
+.env
+*.egg-info/
+build/
+dist/

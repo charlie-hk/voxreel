@@ -1,0 +1,25 @@
+{
+  "title": "Local models example",
+  "output": "out/local.mp4",
+  "resolution": "1280x720",
+  "fps": 24,
+  "purpose": "narration",
+  "voice": "narrator",
+  "tts": {
+    "provider": "command",
+    "config": {
+      "cmd": ["python", "my_tts.py", "--text-file", "{text_file}", "--voice", "{voice}", "--speaker-wav", "{sample}", "--out", "{out}"],
+      "timeout": 900
+    }
+  },
+  "video": {
+    "provider": "command",
+    "config": {
+      "cmd": ["python", "my_video.py", "--prompt", "{prompt}", "--seconds", "{duration}", "--size", "{width}x{height}", "--fps", "{fps}", "--out", "{out}"],
+      "timeout": 3600
+    }
+  },
+  "scenes": [
+    { "id": "one", "text": "Replace my_tts.py and my_video.py with a wrapper around the local model you run.", "visual": "A desk with a glowing monitor" }
+  ]
+}
